@@ -22,6 +22,9 @@ const app = express();
 // ✅ Global CORS
 const allowedOrigins = [
   "https://www.optimal-itsolutions.com",
+  "https://optimal-itsolutions.com",
+  "https://www.digitalparadigm.com.au",
+  "https://digitalparadigm.com.au/",
   "http://localhost:5173",
 ];
 
@@ -60,7 +63,7 @@ cron.schedule("0 */12 * * *", () => {
   runReportEmails();
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5005;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
