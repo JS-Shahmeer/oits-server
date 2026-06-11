@@ -20,19 +20,23 @@ const runReportEmails = require("./jobs/reportEmails");
 const app = express();
 
 // ✅ Global CORS
-const allowedOrigins = [
+const digitalParadigmOrigins = (process.env.DIGITAL_PARADIGM_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set([
   "https://www.optimal-itsolutions.com",
   "https://optimal-itsolutions.com",
-  "https://www.digitalparadigm.com.au",
-  "https://digitalparadigm.com.au/",
   "http://localhost:5173",
-];
+  ...digitalParadigmOrigins,
+]);
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like Postman)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.has(origin)) {
       return callback(null, true);
     } else {
       return callback(new Error("Not allowed by CORS"));
@@ -44,7 +48,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
-app.use("/uploads", express.static("uploads")); // serve uploaded files
+app.use("/uploads", express.static("uploads")); // serve uploaded filesa
 
 // Routes
 app.use("/api/contact", contactRoute);
@@ -63,7 +67,7 @@ cron.schedule("0 */12 * * *", () => {
   runReportEmails();
 });
 
-const PORT = process.env.PORT || 5005;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
