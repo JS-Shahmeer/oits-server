@@ -16,6 +16,7 @@ const ppcHeroFormRoute = require("./routes/ppcHeroForm");
 const mobileppcHeroForm = require("./routes/mobileppcheroform");
 const activityRoutes = require("./routes/activity");
 const runReportEmails = require("./jobs/reportEmails");
+const { brandRequestContext } = require("./utils/brandConfig");
 
 const app = express();
 
@@ -50,6 +51,20 @@ app.use(express.json());
 app.use(cookieParser());
 app.use("/uploads", express.static("uploads")); // serve uploaded filesa
 
+app.use(
+  [
+    "/api/contact",
+    "/api/consultation",
+    "/api/thirdform",
+    "/api/socialChecklist",
+    "/api/socialPresence",
+    "/api/newsletter",
+    "/api/ppcHeroForm",
+    "/api/mobileppcheroform",
+  ],
+  brandRequestContext
+);
+
 // Routes
 app.use("/api/contact", contactRoute);
 app.use("/api/consultation", consultationRoute);
@@ -67,7 +82,7 @@ cron.schedule("0 */12 * * *", () => {
   runReportEmails();
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5005;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });

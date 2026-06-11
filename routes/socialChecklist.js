@@ -3,10 +3,12 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 const sendEmail = require("../utils/sendEmailGraph");
+const { getCurrentBrandConfig } = require("../utils/brandConfig");
 require("dotenv").config();
 
 router.post("/", (req, res) => {
   const { email } = req.body;
+  const brandConfig = getCurrentBrandConfig();
 
   // Basic validation
   if (!email) {
@@ -24,9 +26,9 @@ router.post("/", (req, res) => {
     try {
       // 1️⃣ Email to admin
       const adminMailOptions = {
-        from: `"Optimal IT Solutions" <${process.env.EMAIL_USER}>`,
-        to: process.env.EMAIL_RECEIVER,
-        subject: "New Social Media Checklist Request",
+        from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
+        to: brandConfig.receiver,
+        subject: `New Social Media Checklist Request - ${brandConfig.name}`,
         html: `
           <h3>New Social Media Checklist Request</h3>
           <p><strong>Email:</strong> ${email}</p>
@@ -52,7 +54,7 @@ router.post("/", (req, res) => {
 
       // 2️⃣ Confirmation email to user
       const userMailOptions = {
-        from: `"Optimal IT Solutions" <${process.env.EMAIL_USER}>`,
+        from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: "Thanks for signing up!",
         html: `

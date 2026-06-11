@@ -3,12 +3,14 @@ const router = express.Router();
 const multer = require("multer");
 const db = require("../db");
 const sendEmail = require("../utils/sendEmailGraph");
+const { getCurrentBrandConfig } = require("../utils/brandConfig");
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.post("/", upload.single("file"), (req, res) => {
   const { fullName, email, country, number, message, privacy } = req.body;
   const file = req.file;
+  const brandConfig = getCurrentBrandConfig();
 
   if (!fullName || !email || !country || !number || !message || !privacy) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -44,8 +46,9 @@ router.post("/", upload.single("file"), (req, res) => {
       try {
         // 1️⃣ Email to Admin
         const adminMailOptions = {
-          to: process.env.EMAIL_RECEIVER,
-          subject: "New Consultation Request",
+          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
+          to: brandConfig.receiver,
+          subject: `New Consultation Request - ${brandConfig.name}`,
           html: `
             <h3>New Consultation Submission</h3>
             <p><strong>Name:</strong> ${fullName}</p>
@@ -85,6 +88,7 @@ router.post("/", upload.single("file"), (req, res) => {
 
         // 2️⃣ Confirmation email to User
         const userMailOptions = {
+          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
           to: email,
           subject: "Thanks for signing up!",
           html: `

@@ -3,10 +3,12 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 const sendEmail = require("../utils/sendEmailGraph");
+const { getCurrentBrandConfig } = require("../utils/brandConfig");
 require("dotenv").config();
 
 router.post("/", (req, res) => {
   try {
+    const brandConfig = getCurrentBrandConfig();
     const { fullName, email, phone, country, message, privacy, services } =
       req.body;
 
@@ -48,9 +50,9 @@ router.post("/", (req, res) => {
       try {
         // 1️⃣ Email to admin
         const adminMail = {
-          from: `"Optimal IT Solutions" <${process.env.EMAIL_USER}>`,
-          to: process.env.EMAIL_RECEIVER,
-          subject: "New Service Inquiry",
+          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
+          to: brandConfig.receiver,
+          subject: `New Service Inquiry - ${brandConfig.name}`,
           html: `
             <h3>New Service Inquiry Submission</h3>
             <p><strong>Full Name:</strong> ${fullName}</p>
@@ -79,7 +81,7 @@ router.post("/", (req, res) => {
 
         // 2️⃣ Confirmation email to user
         const userMail = {
-          from: `"Optimal IT Solutions" <${process.env.EMAIL_USER}>`,
+          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
           to: email,
           subject: "Thanks for signing up!",
           html: `

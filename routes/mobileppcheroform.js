@@ -3,10 +3,12 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db"); // your DB connection
 const sendEmail = require("../utils/sendEmailGraph"); // your email util
+const { getCurrentBrandConfig } = require("../utils/brandConfig");
 require("dotenv").config();
 
 // POST /api/mobileppcheroform
 router.post("/", (req, res) => {
+  const brandConfig = getCurrentBrandConfig();
   console.log("📩 New request received at /api/mobileppcheroform");
   const { name, email, phone, message } = req.body;
   console.log("➡️ Form data received:", { name, email, phone, message });
@@ -48,8 +50,8 @@ router.post("/", (req, res) => {
       try {
         // 1️⃣ Email to admin
         const adminMail = {
-          from: `"Optimal IT Solutions" <${process.env.EMAIL_USER}>`,
-          to: process.env.EMAIL_RECEIVER,
+          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
+          to: brandConfig.receiver,
           subject: "📩 New Mobile App Development PPC Hero Form Submission",
           html: `
             <h3>New Submission Received</h3>
@@ -64,7 +66,7 @@ router.post("/", (req, res) => {
 
         // 2️⃣ Confirmation email to user
         const userMail = {
-          from: `"Optimal IT Solutions" <${process.env.EMAIL_USER}>`,
+          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
           to: email,
           subject: "Thanks for contacting us!",
           html: `

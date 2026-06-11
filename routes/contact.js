@@ -3,62 +3,13 @@ const router = express.Router();
 const multer = require("multer");
 const db = require("../db");
 const sendEmail = require("../utils/sendEmailGraph");
+const {
+  validateBrand,
+  getConfirmationHtml,
+} = require("../utils/brandConfig");
 require("dotenv").config();
 
 const upload = multer({ storage: multer.memoryStorage() });
-
-const parseList = (value) =>
-  (value || "")
-    .split(",")
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-
-const BRAND_CONFIG = {
-  optimal: {
-    name: "Optimal IT Solutions",
-    receiver:
-      process.env.OPTIMAL_EMAIL_RECEIVER || process.env.EMAIL_RECEIVER,
-    website: "https://optimal-itsolutions.com",
-    phone: "+1 888-710-6350",
-    domains: ["optimal-itsolutions.com", "www.optimal-itsolutions.com"],
-  },
-  "digital-paradigm": {
-    name: "Digital Paradigm",
-    receiver: process.env.DIGITAL_PARADIGM_EMAIL_RECEIVER,
-    website: process.env.DIGITAL_PARADIGM_WEBSITE,
-    phone: process.env.DIGITAL_PARADIGM_PHONE,
-    domains: parseList(process.env.DIGITAL_PARADIGM_DOMAINS),
-  },
-};
-
-function getRequestHostname(req) {
-  const sourceUrl = req.get("origin") || req.get("referer");
-
-  if (!sourceUrl) return null;
-
-  try {
-    return new URL(sourceUrl).hostname.toLowerCase();
-  } catch {
-    return null;
-  }
-}
-
-function detectBrand(req, requestedBrand) {
-  const hostname = getRequestHostname(req);
-
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return BRAND_CONFIG[requestedBrand] ? requestedBrand : "optimal";
-  }
-
-  const matchedBrand = Object.entries(BRAND_CONFIG).find(([, config]) =>
-    config.domains.includes(hostname)
-  );
-
-  if (matchedBrand) return matchedBrand[0];
-
-  // Retain body support for Postman and other non-browser clients.
-  return BRAND_CONFIG[requestedBrand] ? requestedBrand : null;
-}
 
 // POST /api/contact
 router.post("/", upload.single("file"), (req, res) => {
@@ -70,28 +21,17 @@ router.post("/", upload.single("file"), (req, res) => {
     comments,
     message,
     country,
-    brand: requestedBrand,
   } = req.body;
   const file = req.file;
-  const brand = detectBrand(req, requestedBrand);
-  const brandConfig = BRAND_CONFIG[brand];
+  const brandConfig = validateBrand(req, res);
   const submittedComments = comments || message || null;
 
-  if (!brandConfig) {
-    return res
-      .status(400)
-      .json({ error: "Unable to detect brand from request domain" });
-  }
+  if (!brandConfig) return;
 
   if (!fullName || !email || !phone) {
     return res
       .status(400)
       .json({ error: "Full name, email, and phone are required" });
-  }
-
-  if (!brandConfig.receiver) {
-    console.error(`Missing email receiver configuration for brand: ${brand}`);
-    return res.status(500).json({ error: "Email receiver is not configured" });
   }
 
   db.getConnection((connErr, connection) => {
@@ -113,7 +53,7 @@ router.post("/", upload.single("file"), (req, res) => {
       services || null,
       submittedComments,
       file ? file.originalname : null,
-      brand,
+      brandConfig.key,
     ];
 
     connection.query(query, values, async (err) => {
@@ -171,15 +111,7 @@ router.post("/", upload.single("file"), (req, res) => {
           from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
           to: email,
           subject: "Thanks for signing up!",
-          html: `
-            <div style="font-family: Helvetica, Arial, sans-serif; font-size: 16px; color: #333;">
-              <p>Hi ${fullName}</p>
-              <p>Thanks for reaching out to <strong>${brandConfig.name}!</strong> We're excited to bring your ${services || ""} vision to life. One of our team members will connect with you within 24 hours to discuss your goals and next steps.</p>
-              <p>In the meantime, you can visit us at <a href="${brandConfig.website}">${brandConfig.website}</a> or call us at ${brandConfig.phone} anytime.</p>
-              <p>Best,</p>
-              <p><strong>Team ${brandConfig.name}</strong></p>
-            </div>
-          `,
+          html: getConfirmationHtml(brandConfig, fullName, services),
         };
         await sendEmail(userMailOptions);
         console.log(`Confirmation email sent to ${email}`);

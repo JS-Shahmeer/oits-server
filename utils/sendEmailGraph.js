@@ -1,5 +1,6 @@
 const { Client } = require("@microsoft/microsoft-graph-client");
 const { ClientSecretCredential } = require("@azure/identity");
+const { getCurrentBrandConfig } = require("./brandConfig");
 require("isomorphic-fetch");
 require("dotenv").config();
 
@@ -21,13 +22,54 @@ function toGraphAttachments(attachments = []) {
   }));
 }
 
-async function sendEmailGraph({
-  from,
-  to,
-  subject,
-  html,
-  attachments = [],
-}) {
+function applyBrandToMail(options) {
+  const brandConfig = getCurrentBrandConfig();
+
+  if (!brandConfig) return;
+
+  const adminRecipients = [
+    process.env.EMAIL_RECEIVER,
+    process.env.OPTIMAL_EMAIL_RECEIVER,
+    process.env.DIGITAL_PARADIGM_EMAIL_RECEIVER,
+  ].filter(Boolean);
+  const isAdminEmail = adminRecipients.includes(options.to);
+
+  options.from = `"${brandConfig.name}" <${process.env.EMAIL_USER}>`;
+
+  if (isAdminEmail) {
+    options.to = brandConfig.receiver;
+
+    if (!options.subject.includes(brandConfig.name)) {
+      options.subject = `${options.subject} - ${brandConfig.name}`;
+    }
+
+    if (!options.html.includes("<strong>Brand:</strong>")) {
+      options.html = `<p><strong>Brand:</strong> ${brandConfig.name}</p>${options.html}`;
+    }
+    return;
+  }
+
+  if (brandConfig.key === "digital-paradigm") {
+    options.html = options.html
+      .replaceAll("Optimal IT Solutions", brandConfig.name)
+      .replaceAll("https://optimal-itsolutions.com", brandConfig.website)
+      .replaceAll("www.optimal-itsolutions.com", brandConfig.website)
+      .replaceAll("+1 888-710-6350", brandConfig.phone)
+      .replaceAll("8887106350", brandConfig.phone.replace(/\D/g, ""));
+  }
+}
+
+async function sendEmailGraph(options) {
+  applyBrandToMail(options);
+
+  const {
+    from,
+    to,
+    subject,
+    html,
+    attachments = [],
+  } = options;
+
   if (!to || !to.includes("@")) {
     throw new Error("Invalid recipient email address provided");
   }
