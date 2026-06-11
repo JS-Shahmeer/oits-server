@@ -4,7 +4,6 @@ const router = express.Router();
 const multer = require("multer");
 const db = require("../db");
 const sendEmail = require("../utils/sendEmailGraph");
-const { getCurrentBrandConfig } = require("../utils/brandConfig");
 require("dotenv").config();
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -13,7 +12,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post("/", upload.single("file"), (req, res) => {
   const { fullName, email, number, country, message, privacy } = req.body;
   const file = req.file;
-  const brandConfig = getCurrentBrandConfig();
+  const brandConfig = req.brandConfig;
 
   if (!fullName || !email || !number || !country || !message || !privacy) {
     return res.status(400).json({ error: "Missing required fields" });

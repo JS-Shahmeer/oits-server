@@ -1,6 +1,9 @@
 const { Client } = require("@microsoft/microsoft-graph-client");
 const { ClientSecretCredential } = require("@azure/identity");
-const { getCurrentBrandConfig } = require("./brandConfig");
+const {
+  getCurrentBrandConfig,
+  getBrandConfigByName,
+} = require("./brandConfig");
 require("isomorphic-fetch");
 require("dotenv").config();
 
@@ -23,7 +26,8 @@ function toGraphAttachments(attachments = []) {
 }
 
 function applyBrandToMail(options) {
-  const brandConfig = getCurrentBrandConfig();
+  const brandConfig =
+    getCurrentBrandConfig() || getBrandConfigByName(getFromName(options.from));
 
   if (!brandConfig) return;
 

@@ -3,12 +3,11 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 const sendEmail = require("../utils/sendEmailGraph");
-const { getCurrentBrandConfig } = require("../utils/brandConfig");
 require("dotenv").config();
 
 router.post("/", (req, res) => {
   try {
-    const brandConfig = getCurrentBrandConfig();
+    const brandConfig = req.brandConfig;
     const { fullName, email, phone, country, message, privacy, services } =
       req.body;
 

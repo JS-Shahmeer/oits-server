@@ -3,12 +3,11 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db"); // your DB connection
 const sendEmail = require("../utils/sendEmailGraph"); // your email util
-const { getCurrentBrandConfig } = require("../utils/brandConfig");
 require("dotenv").config();
 
 // POST /api/mobileppcheroform
 router.post("/", (req, res) => {
-  const brandConfig = getCurrentBrandConfig();
+  const brandConfig = req.brandConfig;
   console.log("📩 New request received at /api/mobileppcheroform");
   const { name, email, phone, message } = req.body;
   console.log("➡️ Form data received:", { name, email, phone, message });

@@ -84,11 +84,18 @@ function brandRequestContext(req, res, next) {
 
   if (!brandConfig) return;
 
+  req.brandConfig = brandConfig;
   brandContext.run(brandConfig, next);
 }
 
 function getCurrentBrandConfig() {
   return brandContext.getStore() || null;
+}
+
+function getBrandConfigByName(name) {
+  return (
+    Object.values(BRAND_CONFIG).find((config) => config.name === name) || null
+  );
 }
 
 function getConfirmationHtml(brandConfig, name = "", service = "") {
@@ -111,4 +118,5 @@ module.exports = {
   getConfirmationHtml,
   brandRequestContext,
   getCurrentBrandConfig,
+  getBrandConfigByName,
 };
