@@ -13,6 +13,7 @@ const BRAND_CONFIG = {
   optimal: {
     key: "optimal",
     name: "Optimal IT Solutions",
+    senderEmail: process.env.EMAIL_USER,
     receiver:
       process.env.OPTIMAL_EMAIL_RECEIVER || process.env.EMAIL_RECEIVER,
     website: "https://optimal-itsolutions.com",
@@ -22,6 +23,7 @@ const BRAND_CONFIG = {
   "digital-paradigm": {
     key: "digital-paradigm",
     name: "Digital Paradigm",
+    senderEmail: process.env.DIGITAL_PARADIGM_EMAIL_USER,
     receiver: process.env.DIGITAL_PARADIGM_EMAIL_RECEIVER,
     website:
       process.env.DIGITAL_PARADIGM_WEBSITE ||
@@ -73,6 +75,14 @@ function validateBrand(req, res) {
       `Missing email receiver configuration for brand: ${brandConfig.key}`
     );
     res.status(500).json({ error: "Email receiver is not configured" });
+    return null;
+  }
+
+  if (!brandConfig.senderEmail) {
+    console.error(
+      `Missing sender email configuration for brand: ${brandConfig.key}`
+    );
+    res.status(500).json({ error: "Sender email is not configured" });
     return null;
   }
 

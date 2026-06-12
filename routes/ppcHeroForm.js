@@ -48,7 +48,7 @@ router.post("/", upload.single("file"), (req, res) => {
       try {
         // 1️⃣ Email to admin
         const adminMail = {
-          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
+          from: `"${brandConfig.name}" <${brandConfig.senderEmail}>`,
           to: brandConfig.receiver,
           subject: `New PPC Hero Form Submission - ${brandConfig.name}`,
           html: `
@@ -88,7 +88,7 @@ router.post("/", upload.single("file"), (req, res) => {
 
         // 2️⃣ Confirmation email to user
         const userMail = {
-          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
+          from: `"${brandConfig.name}" <${brandConfig.senderEmail}>`,
           to: email,
           subject: "Thanks for signing up!",
           html: `

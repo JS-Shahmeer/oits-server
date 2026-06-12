@@ -1,2 +1,0 @@
-ALTER TABLE contacts
-ADD COLUMN brand VARCHAR(100) NULL;

@@ -45,7 +45,7 @@ router.post("/", upload.single("file"), (req, res) => {
       try {
         // 1️⃣ Email to Admin
         const adminMailOptions = {
-          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
+          from: `"${brandConfig.name}" <${brandConfig.senderEmail}>`,
           to: brandConfig.receiver,
           subject: `New Consultation Request - ${brandConfig.name}`,
           html: `
@@ -87,7 +87,7 @@ router.post("/", upload.single("file"), (req, res) => {
 
         // 2️⃣ Confirmation email to User
         const userMailOptions = {
-          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
+          from: `"${brandConfig.name}" <${brandConfig.senderEmail}>`,
           to: email,
           subject: "Thanks for signing up!",
           html: `

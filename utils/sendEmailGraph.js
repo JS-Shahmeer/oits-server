@@ -1,5 +1,6 @@
 const { Client } = require("@microsoft/microsoft-graph-client");
 const { ClientSecretCredential } = require("@azure/identity");
+const nodemailer = require("nodemailer");
 const {
   getCurrentBrandConfig,
   getBrandConfigByName,
@@ -29,7 +30,7 @@ function applyBrandToMail(options) {
   const brandConfig =
     getCurrentBrandConfig() || getBrandConfigByName(getFromName(options.from));
 
-  if (!brandConfig) return;
+  if (!brandConfig) return null;
 
   const adminRecipients = [
     process.env.EMAIL_RECEIVER,
@@ -38,7 +39,7 @@ function applyBrandToMail(options) {
   ].filter(Boolean);
   const isAdminEmail = adminRecipients.includes(options.to);
 
-  options.from = `"${brandConfig.name}" <${process.env.EMAIL_USER}>`;
+  options.from = `"${brandConfig.name}" <${brandConfig.senderEmail}>`;
 
   if (isAdminEmail) {
     options.to = brandConfig.receiver;
@@ -50,7 +51,7 @@ function applyBrandToMail(options) {
     if (!options.html.includes("<strong>Brand:</strong>")) {
       options.html = `<p><strong>Brand:</strong> ${brandConfig.name}</p>${options.html}`;
     }
-    return;
+    return brandConfig;
   }
 
   if (brandConfig.key === "digital-paradigm") {
@@ -61,10 +62,55 @@ function applyBrandToMail(options) {
       .replaceAll("+1 888-710-6350", brandConfig.phone)
       .replaceAll("8887106350", brandConfig.phone.replace(/\D/g, ""));
   }
+
+  return brandConfig;
+}
+
+async function sendDigitalParadigmEmail(options) {
+  const {
+    from,
+    to,
+    subject,
+    html,
+    attachments = [],
+  } = options;
+  const port = Number(process.env.DIGITAL_PARADIGM_SMTP_PORT || 465);
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.DIGITAL_PARADIGM_SMTP_HOST || "smtp.hostinger.com",
+    port,
+    secure: port === 465,
+    auth: {
+      user: process.env.DIGITAL_PARADIGM_EMAIL_USER,
+      pass: process.env.DIGITAL_PARADIGM_EMAIL_PASS,
+    },
+  });
+
+  const info = await transporter.sendMail({
+    from,
+    to,
+    subject,
+    html,
+    attachments,
+  });
+
+  console.log(`Digital Paradigm email sent to ${to}: ${info.messageId}`);
+  return info;
 }
 
 async function sendEmailGraph(options) {
-  applyBrandToMail(options);
+  const brandConfig = applyBrandToMail(options);
+
+  if (brandConfig?.key === "digital-paradigm") {
+    if (
+      !process.env.DIGITAL_PARADIGM_EMAIL_USER ||
+      !process.env.DIGITAL_PARADIGM_EMAIL_PASS
+    ) {
+      throw new Error("Digital Paradigm SMTP credentials are not configured");
+    }
+
+    return sendDigitalParadigmEmail(options);
+  }
 
   const {
     from,

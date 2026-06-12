@@ -66,7 +66,7 @@ router.post("/", upload.single("file"), (req, res) => {
 
       try {
         const adminMailOptions = {
-          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
+          from: `"${brandConfig.name}" <${brandConfig.senderEmail}>`,
           to: brandConfig.receiver,
           subject: `New Contact Form Submission - ${brandConfig.name}`,
           html: `
@@ -108,7 +108,7 @@ router.post("/", upload.single("file"), (req, res) => {
         );
 
         const userMailOptions = {
-          from: `"${brandConfig.name}" <${process.env.EMAIL_USER}>`,
+          from: `"${brandConfig.name}" <${brandConfig.senderEmail}>`,
           to: email,
           subject: "Thanks for signing up!",
           html: getConfirmationHtml(brandConfig, fullName, services),
